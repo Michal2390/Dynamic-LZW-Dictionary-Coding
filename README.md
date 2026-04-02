@@ -102,6 +102,50 @@ python benchmark.py --output-dir results/
 > - `histogramy/*.png` – per-file histograms
 > - `wykresy/*.png` – CR and bpp comparison charts
 
+### 📌 Results Highlights
+
+#### 🧾 Main Result Tables
+
+- Full benchmark report: [`wyniki/tabela_wyniki.md`](wyniki/tabela_wyniki.md)
+- Raw numeric data (CSV): [`wyniki/tabela_wyniki.csv`](wyniki/tabela_wyniki.csv)
+
+#### 🏆 Key Compression Takeaways
+
+- **Best overall result:** `pan_tadeusz.txt` with **LZW16+Huff = CR 2.100** (`3.810 bpp`)
+- **Best natural image result:** `peppers.pgm` with **LZW16+Huff = CR 1.588** (`5.039 bpp`)
+- **Strong image case:** `chronometer.pgm` with **LZW16+Huff = CR 1.508** (`5.306 bpp`)
+- **Hard case for dictionary coders:** near-uniform/random-like inputs (`uniform.pgm`, `geometr_099.pgm`) where CR drops below `1.0`
+- **General trend:** `LZW16+Huff` is usually best or tied-best across synthetic, image, and text datasets
+
+#### 📈 Most Important Plots
+
+**Compression ratio (CR):**
+
+![CR synthetic](wyniki/wykresy/CR_rozklady.png)
+![CR natural images](wyniki/wykresy/CR_obrazy.png)
+![CR text](wyniki/wykresy/CR_tekst.png)
+
+**Average code length vs entropy (bpp vs H1):**
+
+![bpp vs H1 synthetic](wyniki/wykresy/bpp_vs_H1_rozklady.png)
+![bpp vs H1 images](wyniki/wykresy/bpp_vs_H1_obrazy.png)
+![bpp vs H1 text](wyniki/wykresy/bpp_vs_H1_tekst.png)
+
+**Entropy comparison (H1/H2/H3 vs LZW-16 bpp):**
+
+![Entropy synthetic](wyniki/wykresy/entropie_rozklady.png)
+![Entropy images](wyniki/wykresy/entropie_obrazy.png)
+![Entropy text](wyniki/wykresy/entropie_tekst.png)
+
+#### 🖼️ Representative Histograms
+
+- Full set: [`wyniki/histogramy/`](wyniki/histogramy)
+- Selected examples:
+
+![Histogram uniform](wyniki/histogramy/uniform_hist.png)
+![Histogram lena](wyniki/histogramy/lena_hist.png)
+![Histogram pan_tadeusz](wyniki/histogramy/pan_tadeusz_hist.png)
+
 ---
 
 ## 📦 Compressed File Format
