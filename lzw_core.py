@@ -84,7 +84,7 @@ def encode(data: bytes, max_bits: int = 16) -> bytes:
 
     dictionary = _init_dict()
     next_code = FIRST_CODE
-    code_width = 9
+    code_width = max_bits
 
     writer = BitWriter()
     # wyślij CLEAR na początku
@@ -108,14 +108,11 @@ def encode(data: bytes, max_bits: int = 16) -> bytes:
                 dictionary[wc] = next_code
                 next_code += 1
                 # zwiększ szerokość kodu gdy przekroczymy 2^code_width
-                if next_code > (1 << code_width) and code_width < max_bits:
-                    code_width += 1
             else:
                 # reset słownika
                 writer.write(CLEAR_CODE, code_width)
                 dictionary = _init_dict()
                 next_code = FIRST_CODE
-                code_width = 9
 
             w = c
 
@@ -143,7 +140,7 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
     def _init_dict():
         return {i: bytes([i]) for i in range(256)}
 
-    code_width = 9
+    code_width = max_bits
     dictionary = _init_dict()
     next_code = FIRST_CODE
 
@@ -177,7 +174,6 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
         if code == CLEAR_CODE:
             dictionary = _init_dict()
             next_code = FIRST_CODE
-            code_width = 9
             try:
                 code = reader.read(code_width)
             except EOFError:
@@ -202,11 +198,11 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
         if next_code <= (1 << max_bits) - 1:
             dictionary[next_code] = prev + bytes([entry[0]])
             next_code += 1
-            if next_code > (1 << code_width) and code_width < max_bits:
-                code_width += 1
 
         prev = entry
 
     return bytes(output)
+
+
 
 

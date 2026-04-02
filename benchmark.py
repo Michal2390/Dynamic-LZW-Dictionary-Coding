@@ -74,14 +74,14 @@ def compress_lzw(data: bytes, max_bits: int) -> tuple[bytes, float]:
     t0 = time.perf_counter()
     compressed = lzw_core.encode(data, max_bits=max_bits)
     # dodaj nagłówek (16 bajtów)
-    header = b"LZW\x00" + struct.pack("BBBBq", 1, 0, 0, max_bits, len(data))
+    header = b"LZW\x00" + struct.pack(">BBBBq", 1, 0, 0, max_bits, len(data))
     return header + compressed, time.perf_counter() - t0
 
 
 def compress_lz78(data: bytes, max_bits: int) -> tuple[bytes, float]:
     t0 = time.perf_counter()
     compressed = lz78_core.encode(data, max_bits=max_bits)
-    header = b"LZ78" + struct.pack("BBBBq", 1, 1, 0, max_bits, len(data))
+    header = b"LZ78" + struct.pack(">BBBBq", 1, 1, 0, max_bits, len(data))
     return header + compressed, time.perf_counter() - t0
 
 
@@ -89,7 +89,7 @@ def compress_lzw_huffman(data: bytes, max_bits: int) -> tuple[bytes, float]:
     t0 = time.perf_counter()
     lzw_bytes = lzw_core.encode(data, max_bits=max_bits)
     huff_bytes = huffman.encode(lzw_bytes)
-    header = b"LZW\x00" + struct.pack("BBBBq", 1, 0, 1, max_bits, len(data))
+    header = b"LZW\x00" + struct.pack(">BBBBq", 1, 0, 1, max_bits, len(data))
     return header + huff_bytes, time.perf_counter() - t0
 
 
@@ -375,5 +375,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

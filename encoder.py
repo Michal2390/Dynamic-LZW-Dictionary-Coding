@@ -40,7 +40,7 @@ def build_header(codec: str, flags: int, max_bits: int, orig_size: int) -> bytes
     codec_byte = 0x00 if codec == "lzw" else 0x01
     return (
         magic
-        + struct.pack("BBBBq", VERSION, codec_byte, flags, max_bits, orig_size)
+        + struct.pack(">BBBBq", VERSION, codec_byte, flags, max_bits, orig_size)
     )
 
 
@@ -121,4 +121,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
