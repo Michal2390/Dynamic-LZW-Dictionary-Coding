@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Wyniki benchmarków (generowane)
+wyniki/
+
+# Pliki tymczasowe
+*.lzw
+*.lz78
+read_pdf.py
+
+# Jupyter
+.ipynb_checkpoints/
+
