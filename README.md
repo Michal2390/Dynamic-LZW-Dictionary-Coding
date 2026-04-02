@@ -121,30 +121,30 @@ python benchmark.py --output-dir results/
 
 **Compression ratio (CR):**
 
-![CR synthetic](assets/readme/CR_rozklady.png)
-![CR natural images](assets/readme/CR_obrazy.png)
-![CR text](assets/readme/CR_tekst.png)
+![CR synthetic](wyniki/wykresy/CR_rozklady.png)
+![CR natural images](wyniki/wykresy/CR_obrazy.png)
+![CR text](wyniki/wykresy/CR_tekst.png)
 
 **Average code length vs entropy (bpp vs H1):**
 
-![bpp vs H1 synthetic](assets/readme/bpp_vs_H1_rozklady.png)
-![bpp vs H1 images](assets/readme/bpp_vs_H1_obrazy.png)
-![bpp vs H1 text](assets/readme/bpp_vs_H1_tekst.png)
+![bpp vs H1 synthetic](wyniki/wykresy/bpp_vs_H1_rozklady.png)
+![bpp vs H1 images](wyniki/wykresy/bpp_vs_H1_obrazy.png)
+![bpp vs H1 text](wyniki/wykresy/bpp_vs_H1_tekst.png)
 
 **Entropy comparison (H1/H2/H3 vs LZW-16 bpp):**
 
-![Entropy synthetic](assets/readme/entropie_rozklady.png)
-![Entropy images](assets/readme/entropie_obrazy.png)
-![Entropy text](assets/readme/entropie_tekst.png)
+![Entropy synthetic](wyniki/wykresy/entropie_rozklady.png)
+![Entropy images](wyniki/wykresy/entropie_obrazy.png)
+![Entropy text](wyniki/wykresy/entropie_tekst.png)
 
 #### 🖼️ Representative Histograms
 
 - Full set is generated locally to `wyniki/histogramy/`
 - Selected examples:
 
-![Histogram uniform](assets/readme/uniform_hist.png)
-![Histogram lena](assets/readme/lena_hist.png)
-![Histogram pan_tadeusz](assets/readme/pan_tadeusz_hist.png)
+![Histogram uniform](wyniki/histogramy/uniform_hist.png)
+![Histogram lena](wyniki/histogramy/lena_hist.png)
+![Histogram pan_tadeusz](wyniki/histogramy/pan_tadeusz_hist.png)
 
 ---
 
