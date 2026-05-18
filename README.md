@@ -111,11 +111,11 @@ python benchmark.py --output-dir results/
 
 #### 🏆 Key Compression Takeaways
 
-- **Best overall result:** `pan_tadeusz.txt` with **LZW16+Huff = CR 2.100** (`3.810 bpp`)
-- **Best natural image result:** `peppers.pgm` with **LZW16+Huff = CR 1.588** (`5.039 bpp`)
-- **Strong image case:** `chronometer.pgm` with **LZW16+Huff = CR 1.508** (`5.306 bpp`)
+- **Best overall result:** `pan_tadeusz.txt` with **LZW16 = CR 2.190** (`3.654 bpp`)
+- **Best natural image result:** `peppers.pgm` with **LZW16 = CR 1.693** (`4.725 bpp`)
+- **Strong image case:** `chronometer.pgm` with **LZW16+Huff = CR 1.543** (`5.186 bpp`)
 - **Hard case for dictionary coders:** near-uniform/random-like inputs (`uniform.pgm`, `geometr_099.pgm`) where CR drops below `1.0`
-- **General trend:** `LZW16+Huff` is usually best or tied-best across synthetic, image, and text datasets
+- **General trend:** `LZW16 / LZW16+Huff` is usually best or tied-best across synthetic, image, and text datasets
 
 #### 📈 Most Important Plots
 

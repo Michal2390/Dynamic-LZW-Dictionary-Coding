@@ -1,13 +1,13 @@
 """
-lzw_core.py – rdzeń algorytmu LZW z kodami zmiennej długości.
+lzw_core.py – rdzeń algorytmu LZW z kodami o dynamicznie rosnącej długości.
 
 Algorytm:
   - Słownik inicjalizowany 256 symbolami jednobajtowymi (kody 0–255).
-  - Kody startują od (init_bits) bitów i rosną do max_bits.
+  - Kody startują od 9 bitów i dynamicznie rosną do max_bits.
   - Gdy słownik jest pełny – reset do stanu inicjalnego (clear code).
   - Specjalne kody: CLEAR_CODE = 256, END_CODE = 257.
 
-Format strumienia kodów (używany przez encoder/decoder przez BitStream):
+Format strumienia kodów:
   CLEAR_CODE | dane... | END_CODE
 """
 
@@ -15,10 +15,8 @@ CLEAR_CODE = 256
 END_CODE = 257
 FIRST_CODE = 258  # pierwszy wolny kod po inicjalizacji
 
-
 class BitWriter:
     """Zapisuje kody o zmiennej liczbie bitów do bufora bajtowego."""
-
     def __init__(self):
         self._buf = 0
         self._buf_len = 0
@@ -42,7 +40,6 @@ class BitWriter:
 
 class BitReader:
     """Odczytuje kody o zmiennej liczbie bitów z bufora bajtowego."""
-
     def __init__(self, data: bytes):
         self._data = data
         self._pos = 0       # pozycja w bajtach
@@ -77,14 +74,14 @@ def encode(data: bytes, max_bits: int = 16) -> bytes:
     if max_bits < 9 or max_bits > 24:
         raise ValueError("max_bits musi być w zakresie 9–24")
 
-    max_code = (1 << max_bits) - 1
-
     def _init_dict():
         return {bytes([i]): i for i in range(256)}
 
     dictionary = _init_dict()
     next_code = FIRST_CODE
-    code_width = max_bits
+    
+    init_bits = 9
+    code_width = init_bits
 
     writer = BitWriter()
     # wyślij CLEAR na początku
@@ -104,19 +101,22 @@ def encode(data: bytes, max_bits: int = 16) -> bytes:
         else:
             writer.write(dictionary[w], code_width)
 
-            if next_code <= max_code:
+            if next_code < (1 << max_bits):
                 dictionary[wc] = next_code
                 next_code += 1
                 # zwiększ szerokość kodu gdy przekroczymy 2^code_width
+                if next_code == (1 << code_width) and code_width < max_bits:
+                    code_width += 1
             else:
                 # reset słownika
                 writer.write(CLEAR_CODE, code_width)
                 dictionary = _init_dict()
                 next_code = FIRST_CODE
+                code_width = init_bits
 
             w = c
 
-    # wyślij ostatni kod
+    # wyślij ostatni kod i zakończ
     writer.write(dictionary[w], code_width)
     writer.write(END_CODE, code_width)
     return writer.flush()
@@ -140,7 +140,8 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
     def _init_dict():
         return {i: bytes([i]) for i in range(256)}
 
-    code_width = max_bits
+    init_bits = 9
+    code_width = init_bits
     dictionary = _init_dict()
     next_code = FIRST_CODE
 
@@ -149,7 +150,6 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
     if first != CLEAR_CODE:
         raise ValueError(f"Oczekiwano CLEAR_CODE na początku, got {first}")
 
-    # pierwszy kod po CLEAR
     try:
         code = reader.read(code_width)
     except EOFError:
@@ -174,6 +174,7 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
         if code == CLEAR_CODE:
             dictionary = _init_dict()
             next_code = FIRST_CODE
+            code_width = init_bits  # Reset szerokości czytania
             try:
                 code = reader.read(code_width)
             except EOFError:
@@ -195,14 +196,13 @@ def decode(data: bytes, max_bits: int = 16) -> bytes:
 
         output.extend(entry)
 
-        if next_code <= (1 << max_bits) - 1:
+        if next_code < (1 << max_bits):
             dictionary[next_code] = prev + bytes([entry[0]])
             next_code += 1
+            
+            if next_code == (1 << code_width) - 1 and code_width < max_bits:
+                code_width += 1
 
         prev = entry
 
     return bytes(output)
-
-
-
-

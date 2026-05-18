@@ -38,6 +38,8 @@ import lzw_core
 import lz78_core
 import huffman
 from pgm_io import pixel_bytes_from_file
+import os
+from PIL import Image
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +99,50 @@ def compress_lzw_huffman(data: bytes, max_bits: int) -> tuple[bytes, float]:
 # Benchmark pojedynczego pliku
 # ---------------------------------------------------------------------------
 
+def get_gif_stats(pgm_path: Path) -> tuple[int, float, float]:
+    if "obrazy" not in str(pgm_path) and "rozklady" not in str(pgm_path):
+        return None, None, None
+    
+    temp_gif = "temp_bench.gif"
+    try:
+        img = Image.open(pgm_path)
+        img.save(temp_gif, format="GIF")
+        
+        orig_size = os.path.getsize(pgm_path)
+        gif_size = os.path.getsize(temp_gif)
+        
+        cr = orig_size / gif_size
+        bpp = (gif_size * 8) / orig_size
+        
+        return gif_size, cr, bpp
+    except Exception as e:
+        print(f"Błąd kompresji GIF: {e}")
+        return None, None, None
+    finally:
+        if os.path.exists(temp_gif):
+            os.remove(temp_gif)
+
+def verify_lossless(orig_data: bytes, comp_data: bytes, codec: str, max_bits: int, has_huff: bool) -> bool:
+    """Odwraca proces kompresji i sprawdza, czy bajty idealnie pasują do oryginału."""
+    try:
+        payload = comp_data[16:]
+        
+        if has_huff:
+            import huffman
+            payload = huffman.decode(payload)
+            
+        if codec == "LZW":
+            import lzw_core
+            decoded = lzw_core.decode(payload, max_bits=max_bits)
+        else:
+            import lz78_core
+            decoded = lz78_core.decode(payload, orig_size=len(orig_data), max_bits=max_bits)
+            
+        return decoded == orig_data
+    except Exception as e:
+        print(f" (Błąd dekompresji: {e})", end="")
+        return False
+
 def benchmark_file(path: Path) -> dict:
     file_bytes = load_file_bytes(path)
     pixel_bytes = load_pixel_bytes(path)   # do analizy entropii
@@ -147,6 +193,16 @@ def benchmark_file(path: Path) -> dict:
             comp_size = len(comp_data)
             cr  = analysis.compression_ratio(orig_size, comp_size)
             bpp = analysis.avg_code_length(orig_size, comp_size)
+
+            #weryfikacja dekodowania
+            codec_type = "LZW" if "LZW" in label else "LZ78"
+            has_huff = "Huff" in label
+            is_valid = verify_lossless(file_bytes, comp_data, codec_type, mb, has_huff)
+            
+            status = "OK" if is_valid else "BŁĄD DEKOMPRESJI!"
+            print(f"CR={cr:.3f}x  bpp={bpp:.3f}  [{status}]")
+
+
             results[f"{label}_bytes"] = comp_size
             results[f"{label}_CR"]    = cr
             results[f"{label}_bpp"]   = bpp
@@ -158,6 +214,19 @@ def benchmark_file(path: Path) -> dict:
             results[f"{label}_CR"]    = None
             results[f"{label}_bpp"]   = None
             results[f"{label}_time"]  = None
+
+    print("     GIF...", end=" ", flush=True)
+    gif_bytes, gif_cr, gif_bpp = get_gif_stats(path)
+    if gif_bytes is not None:
+        results["GIF_bytes"] = gif_bytes
+        results["GIF_CR"] = gif_cr
+        results["GIF_bpp"] = gif_bpp
+        print(f"CR={gif_cr:.3f}x  bpp={gif_bpp:.3f}")
+    else:
+        results["GIF_bytes"] = None
+        results["GIF_CR"] = None
+        results["GIF_bpp"] = None
+        print("Pominięto (to nie obraz)")
 
     return results
 
@@ -195,8 +264,8 @@ def save_comparison_plots(all_results: list, output_dir: Path):
     plots_dir = output_dir / "wykresy"
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    algos = ["LZW-12", "LZW-16", "LZ78-12", "LZ78-16", "LZW16+Huff"]
-    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+    algos = ["LZW-12", "LZW-16", "LZ78-12", "LZ78-16", "LZW16+Huff", "GIF"]
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
 
     for group_name, group_label in [("rozklady", "Rozkłady syntetyczne"),
                                      ("obrazy",   "Obrazy naturalne"),
@@ -204,13 +273,17 @@ def save_comparison_plots(all_results: list, output_dir: Path):
         group = [r for r in all_results if r.get("group") == group_name]
         if not group:
             continue
+
+        current_algos = algos[:-1] if group_name == "tekst" else algos
+        current_colors = colors[:-1] if group_name == "tekst" else colors
+
         names = [r["name"] for r in group]
         x = np.arange(len(names))
 
         # --- Wykres CR ---
         fig, ax = plt.subplots(figsize=(max(10, len(names) * 1.2), 5))
         w = 0.15
-        for i, (algo, color) in enumerate(zip(algos, colors)):
+        for i, (algo, color) in enumerate(zip(current_algos, current_colors)):
             vals = [r.get(f"{algo}_CR") or 0 for r in group]
             ax.bar(x + i * w, vals, w, label=algo, color=color)
         ax.set_xticks(x + w * 2)
@@ -227,7 +300,7 @@ def save_comparison_plots(all_results: list, output_dir: Path):
         fig, ax = plt.subplots(figsize=(max(10, len(names) * 1.2), 5))
         h1_vals = [r["H1"] for r in group]
         ax.plot(names, h1_vals, "k--o", label="H1 (entropia)", linewidth=1.5)
-        for i, (algo, color) in enumerate(zip(algos, colors)):
+        for i, (algo, color) in enumerate(zip(current_algos, current_colors)):
             vals = [r.get(f"{algo}_bpp") or 0 for r in group]
             ax.plot(names, vals, "o-", label=algo, color=color, markersize=4)
         ax.set_xticklabels(names, rotation=30, ha="right", fontsize=8)
@@ -262,7 +335,7 @@ def save_comparison_plots(all_results: list, output_dir: Path):
 # Zapis tabel
 # ---------------------------------------------------------------------------
 
-CODEC_COLS = ["LZW-12", "LZW-16", "LZ78-12", "LZ78-16", "LZW16+Huff"]
+CODEC_COLS = ["LZW-12", "LZW-16", "LZ78-12", "LZ78-16", "LZW16+Huff", "GIF"]
 
 
 def save_csv(all_results: list, path: Path):
